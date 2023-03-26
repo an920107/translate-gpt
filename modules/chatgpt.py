@@ -7,10 +7,6 @@ import copy
 
 class ChatGPT:
 
-    def __init__(self, config_file: TextIOWrapper) -> None:
-        self._config_dict = json.load(config_file)
-        config_file.close()
-        
     '''
     底下是讀入設定檔應有的 json 格式
     {
@@ -28,19 +24,24 @@ class ChatGPT:
         }
     }
     '''
+    def __init__(self, config_file: TextIOWrapper) -> None:
+        self._config_file = config_file
+        
+
     def post(self, text: str) -> str:
 
         URL = "https://api.openai.com/v1/chat/completions"
 
-        to_post = copy.deepcopy(self._config_dict["config"])
+        config_dict = json.load(self._config_file)
+        self._config_file.seek(0)
 
-        self._auth = HTTPBasicAuth("Bearer", self._config_dict["key"])
+        self._auth = HTTPBasicAuth("Bearer", config_dict["key"])
 
-        to_post["messages"].append({
+        config_dict["config"]["messages"].append({
             "role": "user",
-            "content": self._config_dict["prefix"] + text + self._config_dict["suffix"]
+            "content": config_dict["prefix"] + text + config_dict["suffix"]
         })
-        response = requests.post(URL, json=to_post, auth=self._auth)
+        response = requests.post(URL, json=config_dict["config"], auth=self._auth)
         
         # print(self._config_dict["config"])
         # print(response.text)
